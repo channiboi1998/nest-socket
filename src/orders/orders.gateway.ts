@@ -44,7 +44,7 @@ export class OrdersGateway implements OnGatewayDisconnect {
       }
       this.rooms[roomId].add(client.id);
     }
-    console.log(this.rooms);
+    console.log('joinRoom', this.rooms);
   }
 
   /**
@@ -68,7 +68,7 @@ export class OrdersGateway implements OnGatewayDisconnect {
         delete this.rooms[roomId];
       }
     }
-    console.log(this.rooms);
+    console.log('leaveRoom', this.rooms);
   }
 
   /**
@@ -90,7 +90,7 @@ export class OrdersGateway implements OnGatewayDisconnect {
         break;
       }
     }
-    console.log(this.rooms);
+    console.log('leaveAllRooms', this.rooms);
   }
 
   /**
@@ -120,6 +120,6 @@ export class OrdersGateway implements OnGatewayDisconnect {
   handleDisconnect(client: Socket) {
     // Remove the client from the corresponding room
     this.leaveAllRooms(client);
-    console.log(this.rooms);
+    console.log('handleDisconnect', this.rooms);
   }
 }

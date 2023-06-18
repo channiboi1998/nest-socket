@@ -82,6 +82,7 @@ export class OrdersGateway implements OnGatewayDisconnect {
   leaveAllRooms(@ConnectedSocket() client: Socket) {
     for (const roomId in this.rooms) {
       if (this.rooms[roomId].has(client.id)) {
+        client.leave(roomId);
         this.rooms[roomId].delete(client.id);
         if (this.rooms[roomId].size === 0) {
           delete this.rooms[roomId];
@@ -101,7 +102,9 @@ export class OrdersGateway implements OnGatewayDisconnect {
    */
   @SubscribeMessage('updateOrderStatus')
   updateOrderStatus(@MessageBody() data: UpdateOrderDto) {
-    this.server.to(data.roomId).emit('updateOrderStatus', data.payload);
+    this.server
+      .to(data.payload.storeId)
+      .emit('updateOrderStatus', data.payload);
     this.server
       .to(data.payload.orderNo)
       .emit('updateOrderStatus', data.payload);

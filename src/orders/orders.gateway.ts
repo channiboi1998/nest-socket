@@ -11,6 +11,7 @@ import { Server, Socket } from 'socket.io';
 import { UpdateOrderDto } from './dto/updateOrderStatus.dto';
 
 @WebSocketGateway({
+  namespace: '/socket',
   cors: {
     origin: '*',
   },

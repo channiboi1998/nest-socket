@@ -26,14 +26,12 @@ export class Conversation {
   messages: Message[];
 }
 
-export class UpdateOrderDto {
-  payload: {
-    storeId: string;
-    orderNo: string;
-    body: {
-      status: string;
-      reason?: string;
-      additionalReason?: string;
-    };
+export class UpdateOrderStatusPayload {
+  storeId: string;
+  orderNo: string;
+  body: {
+    status: string;
+    reason?: string;
+    additionalReason?: string;
   };
 }

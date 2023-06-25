@@ -11,7 +11,7 @@ import { Server, Socket } from 'socket.io';
 import {
   Conversation,
   NewMessagePayload,
-  UpdateOrderDto,
+  UpdateOrderStatusPayload,
 } from './dto/socket.dto';
 
 @WebSocketGateway({
@@ -26,7 +26,7 @@ export class OrdersGateway implements OnGatewayDisconnect {
 
   private rooms: Record<string, Set<string>> = {}; // To track the clients in each room
 
-  private chatDatabase: Record<string, Conversation[]> = {};
+  private chatDatabase: Record<string, Conversation[]> = {}; // In memory chat database
 
   constructor(private readonly ordersService: OrdersService) {}
 
@@ -41,21 +41,6 @@ export class OrdersGateway implements OnGatewayDisconnect {
         this.rooms[roomId] = new Set<string>();
       }
       this.rooms[roomId].add(client.id);
-    }
-  }
-
-  @SubscribeMessage('leaveRoom')
-  leaveRoom(
-    @MessageBody('roomId') roomId: string,
-    @ConnectedSocket() client: Socket,
-  ) {
-    client.leave(roomId);
-
-    if (this.rooms[roomId] && this.rooms[roomId].has(client.id)) {
-      this.rooms[roomId].delete(client.id);
-      if (this.rooms[roomId].size === 0) {
-        delete this.rooms[roomId];
-      }
     }
   }
 
@@ -74,13 +59,9 @@ export class OrdersGateway implements OnGatewayDisconnect {
   }
 
   @SubscribeMessage('updateOrderStatus')
-  updateOrderStatus(@MessageBody() data: UpdateOrderDto) {
-    this.server
-      .to(data.payload.storeId)
-      .emit('updateOrderStatus', data.payload);
-    this.server
-      .to(data.payload.orderNo)
-      .emit('updateOrderStatus', data.payload);
+  updateOrderStatus(@MessageBody() data: UpdateOrderStatusPayload) {
+    this.server.to(data.storeId).emit('updateOrderStatus', data);
+    this.server.to(data.orderNo).emit('updateOrderStatus', data);
   }
 
   @SubscribeMessage('newMessage')
@@ -88,12 +69,14 @@ export class OrdersGateway implements OnGatewayDisconnect {
     const newMsg = { ...data, id: new Date().toISOString() };
 
     if (this.chatDatabase[data.storeId]) {
-      // Store Conversation Exist
+      // Store conversation exist
+
       const orderConversation = this.chatDatabase[data.storeId]?.find(
         (conversation: Conversation) => conversation.orderNo === data.orderNo,
       );
 
       if (orderConversation) {
+        // Order Conversation Exists
         this.chatDatabase[data.storeId]
           .find(
             (conversation: Conversation) =>
@@ -101,13 +84,14 @@ export class OrdersGateway implements OnGatewayDisconnect {
           )
           .messages.push(newMsg);
       } else {
+        // Order Conversation does not exist, create one.
         this.chatDatabase[data.storeId].push({
           orderNo: data.orderNo,
           messages: [newMsg],
         });
       }
     } else {
-      // Store Conversation Not Found, Create one.
+      // Store Conversation Not Found, create one.
       this.chatDatabase[data.storeId] = [];
       this.chatDatabase[data.storeId].push({
         orderNo: data.orderNo,

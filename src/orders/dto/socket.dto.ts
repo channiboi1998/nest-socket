@@ -1,4 +1,4 @@
-export class NewMessagePayload {
+export interface NewMessagePayload {
   orderNo: string;
   storeId: string;
   body: string;
@@ -10,23 +10,23 @@ export class NewMessagePayload {
 
 export type SenderType = 'OM' | 'PWA';
 
-export class Sender {
+export interface Sender {
   type: SenderType;
   name: string;
 }
 
-export class Message {
+export interface Message {
   id: string;
   body: string;
   sender: Sender;
 }
 
-export class Conversation {
+export interface Conversation {
   orderNo: string;
   messages: Message[];
 }
 
-export class UpdateOrderStatusPayload {
+export interface UpdateOrderStatusPayload {
   storeId: string;
   orderNo: string;
   body: {

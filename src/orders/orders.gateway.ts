@@ -30,7 +30,7 @@ export class OrdersGateway implements OnGatewayDisconnect {
 
   constructor(private readonly ordersService: OrdersService) {}
 
-  @SubscribeMessage('joinRoom')
+  @SubscribeMessage('join-room')
   joinRoom(
     @MessageBody('roomId') roomId: string,
     @ConnectedSocket() client: Socket,
@@ -44,7 +44,7 @@ export class OrdersGateway implements OnGatewayDisconnect {
     }
   }
 
-  @SubscribeMessage('leaveAllRooms')
+  @SubscribeMessage('leave-rooms')
   leaveAllRooms(@ConnectedSocket() client: Socket) {
     for (const roomId in this.rooms) {
       if (this.rooms[roomId].has(client.id)) {
@@ -58,13 +58,13 @@ export class OrdersGateway implements OnGatewayDisconnect {
     }
   }
 
-  @SubscribeMessage('updateOrderStatus')
+  @SubscribeMessage('update-order-status')
   updateOrderStatus(@MessageBody() data: UpdateOrderStatusPayload) {
-    this.server.to(data.storeId).emit('updateOrderStatus', data);
-    this.server.to(data.orderNo).emit('updateOrderStatus', data);
+    this.server.to(data.storeId).emit('update-order-status', data);
+    this.server.to(data.orderNo).emit('update-order-status', data);
   }
 
-  @SubscribeMessage('newMessage')
+  @SubscribeMessage('new-message')
   newMessage(@MessageBody() data: NewMessagePayload) {
     const newMsg = { ...data, id: new Date().toISOString() };
 
@@ -99,11 +99,11 @@ export class OrdersGateway implements OnGatewayDisconnect {
       });
     }
 
-    this.server.to(data.storeId).emit('newMessage', newMsg);
-    this.server.to(data.orderNo).emit('newMessage', newMsg);
+    this.server.to(data.storeId).emit('new-message', newMsg);
+    this.server.to(data.orderNo).emit('new-message', newMsg);
   }
 
-  @SubscribeMessage('getOrderConversation')
+  @SubscribeMessage('get-order-conversation')
   getOrderConversation(
     @MessageBody() data: { orderNo: string; storeId: string },
     @ConnectedSocket() client: Socket,
@@ -113,16 +113,18 @@ export class OrdersGateway implements OnGatewayDisconnect {
       storeConversations.find(
         (conversation: Conversation) => conversation.orderNo === data.orderNo,
       )?.messages ?? [];
-    this.server.to(client.id).emit('getOrderConversation', orderConversation);
+    this.server.to(client.id).emit('get-order-conversation', orderConversation);
   }
 
-  @SubscribeMessage('getStoreConversations')
+  @SubscribeMessage('get-store-conversations')
   getStoreConversations(
     @MessageBody('storeId') storeId: string,
     @ConnectedSocket() client: Socket,
   ) {
     const storeConversations = this.chatDatabase[storeId] ?? [];
-    this.server.to(client.id).emit('getStoreConversations', storeConversations);
+    this.server
+      .to(client.id)
+      .emit('get-store-conversations', storeConversations);
   }
 
   handleDisconnect(client: Socket) {
